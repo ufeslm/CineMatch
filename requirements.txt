@@ -15,18 +15,10 @@ requests>=2.31.0
 # Environment variables
 python-dotenv>=1.0.0
 
-# Data processing and machine learning (for future ML features)
-numpy>=1.26.0
-pandas>=2.2.0
-scikit-learn>=1.4.0
-
 # Database migration tool
 alembic>=1.13.0
 
-# Testing framework
-pytest>=8.0.0
-
-# Email validation (optional but recommended)
+# Email validation
 email-validator>=2.1.0
 
 # For better datetime handling
