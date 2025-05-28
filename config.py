@@ -9,13 +9,13 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # TMDB API Configuration
-    TMDB_API_KEY = os.environ.get('TMDB_API_KEY') or 'b58a5f26fe980d389eb8f043060f8470'
+    TMDB_API_KEY = 'b58a5f26fe980d389eb8f043060f8470'
     TMDB_BASE_URL = 'https://api.themoviedb.org/3'
     
     # Email Configuration
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'recommendationsmovies630@gmail.com'
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'wsfm injo hvfd bddf'
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USERNAME') or 'recommendationsmovies630@gmail.com' 
+    MAIL_USERNAME = 'recommendationsmovies630@gmail.com'
+    MAIL_PASSWORD = 'wsfm injo hvfd bddf'
+    MAIL_DEFAULT_SENDER = 'recommendationsmovies630@gmail.com' 

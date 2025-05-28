@@ -206,35 +206,6 @@ movie-recommendation/
 └── README.md
 ```
 
-## 🚀 Deployment
-
-Ready to deploy your movie recommendation system? We've got you covered!
-
-### Quick Start (Windows)
-```powershell
-# Run this in PowerShell
-.\quick-deploy.ps1
-```
-
-### Manual Setup
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Test locally
-python deploy.py
-```
-
-### Deploy Online (FREE)
-📖 **See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete step-by-step instructions**
-
-**Recommended platforms:**
-- **Render** (easiest, auto-deploys from GitHub)
-- **Railway** (simple, good free tier)
-- **PythonAnywhere** (always-on free tier)
-
-All platforms offer free tiers perfect for this project!
-
 ## Future Improvements
 
 1. Add user preferences for recommendation filters
