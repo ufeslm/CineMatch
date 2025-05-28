@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Your Movie Recommendations</h2>
+    
+    {% if movies %}
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for movie in movies %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="card-img-top" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 300px;">
+                                No Image Available
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ movie.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">Release Date: {{ movie.release_date }}</small><br>
+                                <small class="text-muted">Rating: {{ movie.vote_average }}/10</small>
+                            </p>
+                            <div class="d-flex flex-column gap-2">
+                                <a href="{{ url_for('main.movie_details', movie_id=movie.id) }}" class="btn btn-primary">View Details</a>
+                                <form action="{{ url_for('main.add_favorite') }}" method="POST">
+                                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                                    <input type="hidden" name="title" value="{{ movie.title }}">
+                                    <input type="hidden" name="rating" value="{{ movie.vote_average }}">
+                                    <input type="hidden" name="source_page" value="recommendations">
+                                    <button type="submit" class="btn btn-success w-100">Add to Favorites</button>
+                                </form>
+                                <form action="{{ url_for('main.add_watch_later') }}" method="POST">
+                                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                                    <input type="hidden" name="title" value="{{ movie.title }}">
+                                    <input type="hidden" name="source_page" value="recommendations">
+                                    <button type="submit" class="btn btn-info w-100">Add to Watch Later</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No recommendations available yet. Add some favorite movies to get personalized recommendations!
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

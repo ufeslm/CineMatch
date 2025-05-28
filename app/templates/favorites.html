@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">My Favorite Movies</h2>
+    
+    {% if favorites %}
+        <div class="row">
+            {% for favorite in favorites %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if favorite.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ favorite.poster_path }}" class="card-img-top" alt="{{ favorite.title }}" style="height: 400px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ favorite.title }}</h5>
+                            <p class="card-text">
+                                <strong>Rating:</strong> {{ favorite.rating }}/10
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('main.movie_details', movie_id=favorite.movie_id) }}" class="btn btn-primary">
+                                    View Details
+                                </a>
+                                <form action="{{ url_for('main.remove_favorite', movie_id=favorite.movie_id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            You haven't added any favorite movies yet. 
+            <a href="{{ url_for('main.search') }}" class="alert-link">Search for movies</a> to add them to your favorites.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

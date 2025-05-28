@@ -1,0 +1,740 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title }} - CineMatch{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Backdrop -->
+<div class="movie-hero" style="background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
+    <div class="hero-content">
+        <div class="movie-poster-section">
+            <div class="poster-container">
+                {% if movie.poster_path %}
+                <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" 
+                     class="movie-poster" 
+                     alt="{{ movie.title }}">
+                {% else %}
+                <div class="poster-placeholder">
+                    <i class="fas fa-film"></i>
+                </div>
+                {% endif %}
+                <div class="rating-overlay">
+                    <div class="rating-circle">
+                        <span class="rating-score">{{ "%.1f"|format(movie.vote_average) }}</span>
+                        <span class="rating-max">/10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="movie-info-section">
+            <h1 class="movie-title">{{ movie.title }}</h1>
+            {% if movie.tagline %}
+            <p class="movie-tagline">"{{ movie.tagline }}"</p>
+            {% endif %}
+            
+            <div class="movie-meta">
+                {% if movie.release_date %}
+                <span class="meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    {{ movie.release_date }}
+                </span>
+                {% endif %}
+                {% if movie.runtime %}
+                <span class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    {{ movie.runtime }} min
+                </span>
+                {% endif %}
+                {% if movie.genres %}
+                <span class="meta-item">
+                    <i class="fas fa-tags"></i>
+                    {% for genre in movie.genres %}{{ genre.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="movie-overview">
+                <h3>Overview</h3>
+                <p>{{ movie.overview }}</p>
+            </div>
+            
+            {% if current_user.is_authenticated %}
+            <div class="action-buttons">
+                <form action="{{ url_for('main.add_favorite') }}" method="post" class="d-inline">
+                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                    <input type="hidden" name="title" value="{{ movie.title }}">
+                    <input type="hidden" name="rating" value="{{ movie.vote_average }}">
+                    <input type="hidden" name="source_page" value="movie_details">
+                    <button type="submit" class="btn btn-primary" {% if is_favorite %}disabled{% endif %}>
+                        <i class="fas fa-heart me-2"></i>
+                        {% if is_favorite %}In Favorites{% else %}Add to Favorites{% endif %}
+                    </button>
+                </form>
+                
+                <form action="{{ url_for('main.add_watch_later') }}" method="post" class="d-inline">
+                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                    <input type="hidden" name="title" value="{{ movie.title }}">
+                    <input type="hidden" name="source_page" value="movie_details">
+                    <button type="submit" class="btn btn-outline-primary" {% if is_watch_later %}disabled{% endif %}>
+                        <i class="fas fa-bookmark me-2"></i>
+                        {% if is_watch_later %}In Watchlist{% else %}Add to Watchlist{% endif %}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Sections -->
+<div class="movie-content">
+    <!-- Cast Section -->
+    {% if movie.credits and movie.credits.cast %}
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-users me-2"></i>Cast
+        </h2>
+        <div class="cast-grid">
+            {% for actor in movie.credits.cast[:12] %}
+            <div class="cast-card">
+                <div class="cast-photo">
+                    {% if actor.profile_path %}
+                    <img src="https://image.tmdb.org/t/p/w185{{ actor.profile_path }}" 
+                         alt="{{ actor.name }}"
+                         loading="lazy">
+                    {% else %}
+                    <div class="photo-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="cast-info">
+                    <h5 class="actor-name">{{ actor.name }}</h5>
+                    <p class="character-name">{{ actor.character }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Trailers Section -->
+    {% if movie.videos and movie.videos.results %}
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-play me-2"></i>Videos & Trailers
+        </h2>
+        <div class="videos-grid">
+            {% for video in movie.videos.results[:6] %}
+            {% if video.site == 'YouTube' %}
+            <div class="video-card">
+                <div class="video-thumbnail" onclick="playVideo('{{ video.key }}', '{{ video.name }}')">
+                    <img src="https://img.youtube.com/vi/{{ video.key }}/hqdefault.jpg" 
+                         alt="{{ video.name }}"
+                         loading="lazy">
+                    <div class="play-overlay">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <h6 class="video-title">{{ video.name }}</h6>
+                    <p class="video-type">{{ video.type }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Crew Section -->
+    {% if movie.credits and movie.credits.crew %}
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-users-cog me-2"></i>Key Crew
+        </h2>
+        <div class="crew-grid">
+            {% set key_jobs = ['Director', 'Producer', 'Executive Producer', 'Screenplay', 'Story', 'Director of Photography', 'Original Music Composer', 'Editor'] %}
+            {% for job in key_jobs %}
+                {% set crew_found = [] %}
+                {% for crew_member in movie.credits.crew %}
+                    {% if crew_member.job == job and crew_found|length == 0 %}
+                        {% set _ = crew_found.append(crew_member) %}
+                        <div class="crew-item">
+                            <h6 class="crew-name">{{ crew_member.name }}</h6>
+                            <p class="crew-job">{{ crew_member.job }}</p>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Movie Details Section -->
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-info-circle me-2"></i>Movie Details
+        </h2>
+        <div class="details-grid">
+            <div class="detail-group">
+                <h5>Release Information</h5>
+                <div class="detail-items">
+                    {% if movie.release_date %}
+                    <div class="detail-item">
+                        <span class="detail-label">Release Date</span>
+                        <span class="detail-value">{{ movie.release_date }}</span>
+                    </div>
+                    {% endif %}
+                    {% if movie.production_countries %}
+                    <div class="detail-item">
+                        <span class="detail-label">Country</span>
+                        <span class="detail-value">
+                            {% for country in movie.production_countries %}{{ country.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% if movie.spoken_languages %}
+                    <div class="detail-item">
+                        <span class="detail-label">Languages</span>
+                        <span class="detail-value">
+                            {% for language in movie.spoken_languages %}{{ language.english_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h5>Ratings & Stats</h5>
+                <div class="detail-items">
+                    <div class="detail-item">
+                        <span class="detail-label">TMDB Rating</span>
+                        <span class="detail-value">{{ "%.1f"|format(movie.vote_average) }}/10 ({{ movie.vote_count }} votes)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Popularity</span>
+                        <span class="detail-value">{{ "%.0f"|format(movie.popularity) }}</span>
+                    </div>
+                    {% if movie.status %}
+                    <div class="detail-item">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">{{ movie.status }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if movie.budget or movie.revenue %}
+            <div class="detail-group">
+                <h5>Financial</h5>
+                <div class="detail-items">
+                    {% if movie.budget and movie.budget > 0 %}
+                    <div class="detail-item">
+                        <span class="detail-label">Budget</span>
+                        <span class="detail-value">${{ "{:,}".format(movie.budget) }}</span>
+                    </div>
+                    {% endif %}
+                    {% if movie.revenue and movie.revenue > 0 %}
+                    <div class="detail-item">
+                        <span class="detail-label">Revenue</span>
+                        <span class="detail-value">${{ "{:,}".format(movie.revenue) }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if movie.production_companies %}
+            <div class="detail-group">
+                <h5>Production</h5>
+                <div class="detail-items">
+                    <div class="detail-item">
+                        <span class="detail-label">Companies</span>
+                        <span class="detail-value">
+                            {% for company in movie.production_companies %}{{ company.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Video Modal -->
+<div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="videoModalLabel">Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ratio ratio-16x9">
+                    <iframe id="videoFrame" src="" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hero Section */
+.movie-hero {
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    margin: -2rem -15px 3rem -15px;
+    position: relative;
+}
+
+.hero-content {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3rem;
+    align-items: start;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+}
+
+.poster-container {
+    position: relative;
+    width: 300px;
+    min-width: 300px;
+}
+
+.movie-poster {
+    width: 100%;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    transition: transform 0.3s ease;
+}
+
+.movie-poster:hover {
+    transform: scale(1.02);
+}
+
+.poster-placeholder {
+    width: 100%;
+    height: 450px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 3rem;
+}
+
+.rating-overlay {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+}
+
+.rating-circle {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(45deg, var(--accent-color), var(--accent-light));
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    box-shadow: var(--shadow-lg);
+    border: 4px solid white;
+}
+
+.rating-score {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.rating-max {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.movie-info-section {
+    color: white;
+}
+
+.movie-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.movie-tagline {
+    font-size: 1.3rem;
+    font-style: italic;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.movie-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.meta-item i {
+    color: var(--accent-light);
+}
+
+.movie-overview h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.movie-overview p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    max-width: 800px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 25px;
+}
+
+/* Cast Section */
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
+.cast-card {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-light);
+}
+
+.cast-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.cast-photo {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.cast-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 2rem;
+}
+
+.cast-info {
+    padding: 1rem;
+}
+
+.actor-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.character-name {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Videos Section */
+.videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.video-card {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-light);
+}
+
+.video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.video-thumbnail {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.video-thumbnail img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.video-thumbnail:hover img {
+    transform: scale(1.05);
+}
+
+.play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(233, 69, 96, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.video-thumbnail:hover .play-overlay {
+    background: var(--accent-color);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.video-info {
+    padding: 1rem;
+}
+
+.video-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.video-type {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Crew Section */
+.crew-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.crew-item {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--accent-color);
+}
+
+.crew-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.crew-job {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Details Section */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.detail-group h5 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.detail-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 100px;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .movie-hero {
+        background-attachment: scroll;
+        min-height: auto;
+        margin: -2rem -15px 2rem -15px;
+    }
+    
+    .hero-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    
+    .poster-container {
+        width: 250px;
+        min-width: 250px;
+        margin: 0 auto;
+    }
+    
+    .movie-title {
+        font-size: 2rem;
+    }
+    
+    .movie-meta {
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .cast-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .videos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .crew-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: start;
+        gap: 0.25rem;
+    }
+    
+    .detail-value {
+        text-align: left;
+    }
+}
+
+@media (max-width: 576px) {
+    .poster-container {
+        width: 200px;
+        min-width: 200px;
+    }
+    
+    .movie-title {
+        font-size: 1.75rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+function playVideo(videoKey, videoTitle) {
+    const modal = new bootstrap.Modal(document.getElementById('videoModal'));
+    const iframe = document.getElementById('videoFrame');
+    const modalTitle = document.getElementById('videoModalLabel');
+    
+    iframe.src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
+    modalTitle.textContent = videoTitle;
+    
+    modal.show();
+    
+    // Clear iframe when modal is closed
+    document.getElementById('videoModal').addEventListener('hidden.bs.modal', function () {
+        iframe.src = '';
+    });
+}
+</script>
+{% endblock %} 

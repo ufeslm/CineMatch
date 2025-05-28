@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">My Watch Later List</h2>
+    
+    {% if movies %}
+        <div class="row">
+            {% for movie in movies %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="card-img-top" alt="{{ movie.title }}" style="height: 400px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ movie.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">Added on {{ movie.added_date.strftime('%Y-%m-%d') }}</small>
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('main.movie_details', movie_id=movie.movie_id) }}" class="btn btn-primary">
+                                    View Details
+                                </a>
+                                <form action="{{ url_for('main.remove_watch_later', movie_id=movie.movie_id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            Your watch later list is empty. 
+            <a href="{{ url_for('main.recommendations') }}" class="alert-link">Check out our recommendations</a> to add some movies!
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

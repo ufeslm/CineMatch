@@ -1,0 +1,25 @@
+To Stop the Application:
+
+Press Ctrl+C in the terminal where the server is running
+To deactivate the virtual environment, type deactivate
+
+
+To Run Again Later:
+
+Open Command Prompt
+Navigate to project folder
+Activate virtual environment: venv\Scripts\activate
+Run flask run
+
+
+   # Navigate to your project folder
+   Set-Location "C:\Users\youss\OneDrive\Desktop\Movie recc"
+
+   # Create virtual environment
+   py -m venv venv
+
+   Set-ExecutionPolicy RemoteSigned
+
+   # Activate virtual environment
+   # On Windows:
+   venv\Scripts\activate

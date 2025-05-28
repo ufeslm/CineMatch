@@ -1,0 +1,54 @@
+// Movie Recommendation System Class Diagram
+digraph {
+	rankdir=TB
+	node [fillcolor=lightblue shape=record style=filled]
+	User [label="User
+    +id: Integer
+    +username: String
+    +email: String
+    +password_hash: String
+    +set_password(password: String)
+    +check_password(password: String): Boolean"]
+	FavoriteMovie [label="FavoriteMovie
+    +id: Integer
+    +user_id: Integer
+    +movie_id: Integer
+    +title: String
+    +rating: Float"]
+	WatchLater [label="WatchLater
+    +id: Integer
+    +user_id: Integer
+    +movie_id: Integer
+    +title: String
+    +added_date: DateTime"]
+	RecommendationStrategy [label="RecommendationStrategy
+    #api_key: String
+    #base_url: String
+    +{abstract} get_recommendations(user_id: Integer, num_recommendations: Integer): List[Dict]"]
+	CollaborativeFiltering [label="CollaborativeFiltering
+    +get_recommendations(user_id: Integer, num_recommendations: Integer): List[Dict]"]
+	ContentBasedFiltering [label="ContentBasedFiltering
+    +get_recommendations(user_id: Integer, num_recommendations: Integer): List[Dict]"]
+	HybridRecommendation [label="HybridRecommendation
+    +get_recommendations(user_id: Integer, num_recommendations: Integer): List[Dict]"]
+	MovieObserver [label="MovieObserver
+    +{abstract} update(message: String)"]
+	MovieSubject [label="MovieSubject
+    -_observers: List[MovieObserver]
+    +attach(observer: MovieObserver)
+    +detach(observer: MovieObserver)
+    +notify(message: String)"]
+	EmailNotification [label="EmailNotification
+    -email: String
+    +update(message: String)"]
+	RecommendationUpdate [label="RecommendationUpdate
+    +update(message: String)"]
+	User -> FavoriteMovie [label="has many"]
+	User -> WatchLater [label="has many"]
+	RecommendationStrategy -> CollaborativeFiltering [label=extends]
+	RecommendationStrategy -> ContentBasedFiltering [label=extends]
+	RecommendationStrategy -> HybridRecommendation [label=extends]
+	MovieObserver -> EmailNotification [label=extends]
+	MovieObserver -> RecommendationUpdate [label=extends]
+	MovieSubject -> MovieObserver [label=notifies]
+}
