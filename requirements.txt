@@ -30,4 +30,7 @@ pytest>=8.0.0
 email-validator>=2.1.0
 
 # For better datetime handling
-python-dateutil>=2.8.2 
+python-dateutil>=2.8.2
+
+# Production server
+gunicorn>=21.2.0 
